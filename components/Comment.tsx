@@ -3,17 +3,15 @@ import { Image, Text, View } from "react-native";
 import icons from "@/constants/icons";
 import { Models } from "react-native-appwrite";
 
-interface Property extends Models.Document {
-  image: string;
-  name?: string;
-  address?: string;
-  price?: number;
-  rating: number;
+interface Review extends Models.Document {
+  avatar: string;
+  name: string;
+  review: string;
 }
 
 interface Props {
   onPress?: () => void;
-  item: Property;
+  item: Review;
 }
 const Comment = ({ item }: Props) => {
   return (

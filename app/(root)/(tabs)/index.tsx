@@ -39,7 +39,7 @@ export default function Index() {
     skip: true,
   });
 
-  const handleCardPress = (id: string) => router.push(`/properties/$[id]`);
+  const handleCardPress = (id: string) => router.push(`/properties/${id}`);
 
   useEffect(() => {
     refetch({
@@ -53,7 +53,7 @@ export default function Index() {
       <FlatList
         data={properties}
         renderItem={({ item }) => (
-          <Card item={item} onPress={() => handleCardPress(item.$id)} />
+          <Card item={item as any} onPress={() => handleCardPress(item.$id)} />
         )}
         keyExtractor={(item) => item.$id}
         numColumns={2}
@@ -107,7 +107,7 @@ export default function Index() {
                   data={latestProperties}
                   renderItem={({ item }) => (
                     <FeaturedCard
-                      item={item}
+                      item={item as any}
                       onPress={() => handleCardPress(item.$id)}
                     />
                   )}

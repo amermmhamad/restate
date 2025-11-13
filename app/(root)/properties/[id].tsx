@@ -1,4 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router";
+import { useEffect } from "react";
 import {
   Dimensions,
   FlatList,
@@ -17,18 +18,64 @@ import images from "@/constants/images";
 
 import { getPropertyById } from "@/lib/appwrite";
 import { useAppwrite } from "@/lib/useAppwrite";
+import { Models } from "react-native-appwrite";
+
+interface Agent extends Models.Document {
+  avatar: string;
+  name: string;
+  email: string;
+}
+
+interface GalleryItem extends Models.Document {
+  image: string;
+}
+
+interface Review extends Models.Document {
+  avatar: string;
+  name: string;
+  review: string;
+}
+
+interface PropertyDetail extends Models.Document {
+  image: string;
+  name: string;
+  type: string;
+  rating: number;
+  address: string;
+  price: number;
+  description: string;
+  bedrooms: number;
+  bathrooms: number;
+  area: number;
+  agent?: Agent;
+  facilities?: string[];
+  gallery?: GalleryItem[];
+  reviews?: Review[];
+}
 
 const Property = () => {
   const { id } = useLocalSearchParams<{ id?: string }>();
 
   const windowHeight = Dimensions.get("window").height;
 
-  const { data: property } = useAppwrite({
-    fn: getPropertyById,
+  const { data: property, refetch } = useAppwrite<
+    PropertyDetail | null,
+    { id: string }
+  >({
+    fn: getPropertyById as (params: {
+      id: string;
+    }) => Promise<PropertyDetail | null>,
     params: {
       id: id!,
     },
+    skip: !id,
   });
+
+  useEffect(() => {
+    if (id) {
+      refetch({ id });
+    }
+  }, [id]);
 
   return (
     <View>
@@ -88,7 +135,7 @@ const Property = () => {
             <View className="flex flex-row items-center gap-2">
               <Image source={icons.star} className="size-5" />
               <Text className="text-black-200 text-sm mt-1 font-rubik-medium">
-                {property?.rating} ({property?.reviews.length} reviews)
+                {property?.rating} ({property?.reviews?.length || 0} reviews)
               </Text>
             </View>
           </View>
@@ -114,34 +161,36 @@ const Property = () => {
             </Text>
           </View>
 
-          <View className="w-full border-t border-primary-200 pt-7 mt-5">
-            <Text className="text-black-300 text-xl font-rubik-bold">
-              Agent
-            </Text>
+          {property?.agent && (
+            <View className="w-full border-t border-primary-200 pt-7 mt-5">
+              <Text className="text-black-300 text-xl font-rubik-bold">
+                Agent
+              </Text>
 
-            <View className="flex flex-row items-center justify-between mt-4">
-              <View className="flex flex-row items-center">
-                <Image
-                  source={{ uri: property?.agent.avatar }}
-                  className="size-14 rounded-full"
-                />
+              <View className="flex flex-row items-center justify-between mt-4">
+                <View className="flex flex-row items-center">
+                  <Image
+                    source={{ uri: property.agent.avatar }}
+                    className="size-14 rounded-full"
+                  />
 
-                <View className="flex flex-col items-start justify-center ml-3">
-                  <Text className="text-lg text-black-300 text-start font-rubik-bold">
-                    {property?.agent.name}
-                  </Text>
-                  <Text className="text-sm text-black-200 text-start font-rubik-medium">
-                    {property?.agent.email}
-                  </Text>
+                  <View className="flex flex-col items-start justify-center ml-3">
+                    <Text className="text-lg text-black-300 text-start font-rubik-bold">
+                      {property.agent.name}
+                    </Text>
+                    <Text className="text-sm text-black-200 text-start font-rubik-medium">
+                      {property.agent.email}
+                    </Text>
+                  </View>
+                </View>
+
+                <View className="flex flex-row items-center gap-3">
+                  <Image source={icons.chat} className="size-7" />
+                  <Image source={icons.phone} className="size-7" />
                 </View>
               </View>
-
-              <View className="flex flex-row items-center gap-3">
-                <Image source={icons.chat} className="size-7" />
-                <Image source={icons.phone} className="size-7" />
-              </View>
             </View>
-          </View>
+          )}
 
           <View className="mt-7">
             <Text className="text-black-300 text-xl font-rubik-bold">
@@ -157,7 +206,7 @@ const Property = () => {
               Facilities
             </Text>
 
-            {property?.facilities.length > 0 && (
+            {property?.facilities && property.facilities.length > 0 && (
               <View className="flex flex-row flex-wrap items-start justify-start mt-2 gap-5">
                 {property?.facilities.map((item: string, index: number) => {
                   const facility = facilities.find(
@@ -190,7 +239,7 @@ const Property = () => {
             )}
           </View>
 
-          {property?.gallery.length > 0 && (
+          {property?.gallery && property.gallery.length > 0 && (
             <View className="mt-7">
               <Text className="text-black-300 text-xl font-rubik-bold">
                 Gallery
@@ -229,13 +278,14 @@ const Property = () => {
             />
           </View>
 
-          {property?.reviews.length > 0 && (
+          {property?.reviews && property.reviews.length > 0 && (
             <View className="mt-7">
               <View className="flex flex-row items-center justify-between">
                 <View className="flex flex-row items-center">
                   <Image source={icons.star} className="size-6" />
                   <Text className="text-black-300 text-xl font-rubik-bold ml-2">
-                    {property?.rating} ({property?.reviews.length} reviews)
+                    {property?.rating} ({property?.reviews?.length || 0}{" "}
+                    reviews)
                   </Text>
                 </View>
 
@@ -247,7 +297,9 @@ const Property = () => {
               </View>
 
               <View className="mt-5">
-                <Comment item={property?.reviews[0]} />
+                {property?.reviews && property.reviews[0] && (
+                  <Comment item={property.reviews[0]} />
+                )}
               </View>
             </View>
           )}

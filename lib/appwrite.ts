@@ -5,6 +5,7 @@ import {
   Avatars,
   Client,
   Databases,
+  Models,
   OAuthProvider,
   Query,
 } from "react-native-appwrite";
@@ -150,5 +151,86 @@ export async function getProperties({
   } catch (error) {
     console.log(error);
     return [];
+  }
+}
+
+export async function getPropertyById({
+  id,
+}: {
+  id: string;
+}): Promise<Models.Document | null> {
+  try {
+    const property = await databases.getDocument(
+      config.databaseId!,
+      config.propertiesCollectionId!,
+      id
+    );
+
+    // Fetch related agent document
+    let agent = null;
+    if (property.agent) {
+      try {
+        agent = await databases.getDocument(
+          config.databaseId!,
+          config.agentsCollectionId!,
+          property.agent
+        );
+      } catch (error) {
+        console.log("Error fetching agent:", error);
+      }
+    }
+
+    // Fetch related reviews documents
+    let reviews: Models.Document[] = [];
+    if (
+      property.reviews &&
+      Array.isArray(property.reviews) &&
+      property.reviews.length > 0
+    ) {
+      try {
+        const reviewPromises = property.reviews.map((reviewId: string) =>
+          databases.getDocument(
+            config.databaseId!,
+            config.reviewsCollectionId!,
+            reviewId
+          )
+        );
+        reviews = await Promise.all(reviewPromises);
+      } catch (error) {
+        console.log("Error fetching reviews:", error);
+      }
+    }
+
+    // Fetch related gallery documents
+    let gallery: Models.Document[] = [];
+    if (
+      property.gallery &&
+      Array.isArray(property.gallery) &&
+      property.gallery.length > 0
+    ) {
+      try {
+        const galleryPromises = property.gallery.map((galleryId: string) =>
+          databases.getDocument(
+            config.databaseId!,
+            config.galleriesCollectionId!,
+            galleryId
+          )
+        );
+        gallery = await Promise.all(galleryPromises);
+      } catch (error) {
+        console.log("Error fetching gallery:", error);
+      }
+    }
+
+    // Combine property with related documents
+    return {
+      ...property,
+      agent: agent || property.agent,
+      reviews: reviews,
+      gallery: gallery,
+    } as Models.Document;
+  } catch (error) {
+    console.log("Error fetching property:", error);
+    return null;
   }
 }
