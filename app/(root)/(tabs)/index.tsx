@@ -11,7 +11,7 @@ export default function Index() {
   return (
     <SafeAreaView className="bg-white h-full">
       <FlatList
-        data={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+        data={[1, 2, 3, 4]}
         renderItem={({ item }) => <Card />}
         keyExtractor={(item) => item.toString()}
         numColumns={2}
@@ -50,7 +50,7 @@ export default function Index() {
                 </TouchableOpacity>
               </View>
               <FlatList
-                data={[1, 2, 3]}
+                data={[5, 6, 7]}
                 renderItem={({ item }) => <FeaturedCard />}
                 keyExtractor={(item) => item.toString()}
                 horizontal
